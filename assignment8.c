@@ -25,8 +25,17 @@ int client_connect(char const* address){
     hints.ai_family = AF_INET;
 
     err = getaddrinfo(address, MY_PORT_NUMBER_STR, &hints, &actualdata);
+    if (err != 0){
+        fprintf(stderr,"Error: %s\n", gai_strerror(err));
+        exit(1);
+    }
+
     sockfd = socket(actualdata->ai_family, actualdata->ai_socktype, 0);
-    connect(sockfd, actualdata->ai_addr, actualdata->ai_addrlen);
+
+    if ( connect(sockfd, actualdata->ai_addr, actualdata->ai_addrlen) == -1){
+        fprintf(stderr,"Connect Error: %s. Errno:%d\n", strerror(errno), errno);
+        exit(1);
+    }
 
 
     char buffer[256];
@@ -70,6 +79,12 @@ int start_server(){
             int hostEntry;
 
             hostEntry = getnameinfo((struct sockaddr*)&clientAddr, sizeof(clientAddr), hostName, sizeof(hostName), NULL, 0, NI_NUMERICSERV);
+
+            if (hostEntry != 0) {
+                fprintf(stderr, "getnameinfo error: %s\n", gai_strerror(hostEntry));
+                exit(1); 
+            }
+            
             printf("%s %d\n", hostName, times_client_connected);
 
             time_t rawtime;
@@ -78,9 +93,8 @@ int start_server(){
 
             time(&rawtime);
             timeinfo = localtime(&rawtime);
-            strftime(buf, 80, "%a %b %d %H:%M:%S", timeinfo);
+            strftime(buf, 80, "%a %b %e %H:%M:%S", timeinfo);
             buf[18] = '\n';
-
             write(connectfd, buf, 19);
             close(connectfd);
             exit(0);
