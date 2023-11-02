@@ -11,35 +11,24 @@
 #include <time.h>
 
 #define MY_PORT_NUMBER 49999
-
+#define MY_PORT_NUMBER_STR "49999"
 
 
 int client_connect(char const* address){
     printf("This is the client. Address: %s\n", address);
 
     int sockfd;
-    struct sockaddr_in servAddr;
-    struct hostent* hostEntry;
-    struct in_addr **pptr;
+    struct addrinfo hints;
+    struct addrinfo *actualdata;
+    memset(&hints, 0, sizeof(hints));
+    int err;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_family = AF_INET;
 
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0) {
-        perror("socket");
-        exit(1);
-    }
+    err = getaddrinfo(address, MY_PORT_NUMBER_STR, &hints, &actualdata);
+    sockfd = socket(actualdata->ai_family, actualdata->ai_socktype, 0);
+    connect(sockfd, actualdata->ai_addr, actualdata->ai_addrlen);
 
-    memset(&servAddr, 0, sizeof(servAddr));
-    servAddr.sin_family = AF_INET;
-    servAddr.sin_port = htons(MY_PORT_NUMBER);
-    
-    hostEntry = gethostbyname("localhost");
-    pptr = (struct in_addr **) hostEntry->h_addr_list;
-    memcpy(&servAddr.sin_addr, *pptr, sizeof(struct in_addr));
-
-    if (connect(sockfd, (struct sockaddr *) &servAddr, sizeof(servAddr)) < 0) {
-        perror("connect");
-        exit(1);
-    }
 
     char buffer[256];
     read(sockfd, buffer, sizeof(buffer));
