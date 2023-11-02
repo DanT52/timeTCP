@@ -15,7 +15,6 @@
 
 
 int client_connect(char const* address){
-    printf("This is the client. Address: %s\n", address);
 
     int sockfd;
     struct addrinfo hints;
@@ -41,10 +40,7 @@ int client_connect(char const* address){
 
 int start_server(){
 
-    printf("This is the server.\n");
-
     int listenfd, connectfd;
-
     struct sockaddr_in servAddr, clientAddr;
 
     listenfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -61,35 +57,38 @@ int start_server(){
     }
 
     listen(listenfd, 1);
+    int times_client_connected = 0;
 
     int length = sizeof(clientAddr);
+    while(1){
+        connectfd = accept(listenfd, (struct sockaddr *) &clientAddr, &length);
+        times_client_connected++;
+        if (fork() == 0) {
+            close(listenfd);
 
-    connectfd = accept(listenfd, (struct sockaddr *) &clientAddr, &length);
+            char hostName[NI_MAXHOST];
+            int hostEntry;
 
-    if (fork() == 0) {
-        close(listenfd);
+            hostEntry = getnameinfo((struct sockaddr*)&clientAddr, sizeof(clientAddr), hostName, sizeof(hostName), NULL, 0, NI_NUMERICSERV);
+            printf("%s %d\n", hostName, times_client_connected);
 
-        char hostName[NI_MAXHOST];
-        int hostEntry;
+            time_t rawtime;
+            struct tm * timeinfo;
+            char buf[80];
 
-        hostEntry = getnameinfo((struct sockaddr*)&clientAddr, sizeof(clientAddr), hostName, sizeof(hostName), NULL, 0, NI_NUMERICSERV);
-        printf("hostname: %s\n", hostName);
+            time(&rawtime);
+            timeinfo = localtime(&rawtime);
+            strftime(buf, 80, "%a %b %d %H:%M:%S", timeinfo);
+            buf[18] = '\n';
 
-        time_t rawtime;
-        struct tm * timeinfo;
-        char buf[80];
+            write(connectfd, buf, 19);
+            close(connectfd);
+            exit(0);
 
-        time(&rawtime);
-        timeinfo = localtime(&rawtime);
-        strftime(buf, 80, "%a %b %d %H:%M:%S", timeinfo);
-        buf[18] = '\n';
-
-        write(connectfd, buf, 19);
-        close(connectfd);
-        exit(0);
+        }
 
     }
-
+    
 
     exit(0);
 }
