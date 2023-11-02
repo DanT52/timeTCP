@@ -33,7 +33,7 @@ int client_connect(char const* address){
     sockfd = socket(actualdata->ai_family, actualdata->ai_socktype, 0);
 
     if ( connect(sockfd, actualdata->ai_addr, actualdata->ai_addrlen) == -1){
-        fprintf(stderr,"Connect Error: %s. Errno:%d\n", strerror(errno), errno);
+        fprintf(stderr,"Error: %s\n", strerror(errno));
         exit(1);
     }
 
@@ -81,8 +81,8 @@ int start_server(){
             hostEntry = getnameinfo((struct sockaddr*)&clientAddr, sizeof(clientAddr), hostName, sizeof(hostName), NULL, 0, NI_NUMERICSERV);
 
             if (hostEntry != 0) {
-                fprintf(stderr, "getnameinfo error: %s\n", gai_strerror(hostEntry));
-                exit(1); 
+                fprintf(stderr, "getnameinfo: %s\n", gai_strerror(hostEntry));
+                exit(-1);
             }
             
             printf("%s %d\n", hostName, times_client_connected);
